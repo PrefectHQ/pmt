@@ -1,5 +1,7 @@
 from prefect import flow
+from prefect.deployments import Deployment
 from prefect.filesystems import GitHub
+from prefect.infrastructure import KubernetesJob
 from prefect.client.schemas.schedules import IntervalSchedule
 from datetime import timedelta
 

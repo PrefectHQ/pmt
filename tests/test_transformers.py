@@ -41,18 +41,42 @@ class TestBuildFromFlowTransformer:
                 "infra_and_storage",
                 [
                     (
-                        "Publish your infrastructure as a work pool by calling the"
-                        " `.publish_as_work_pool()` method on your infrastructure"
-                        " block."
-                    ),
-                    (
-                        "Pass the name of the new work pool to the `work_pool_name`"
-                        " keyword argument of the `.deploy()` method."
+                        "When deploying flows with `flow.deploy`, work pools replace"
+                        " infrastructure blocks as the source of infrastructure"
+                        " configuration. To migrate from an infrastructure block to a"
+                        " work pool, publish your infrastructure as a work pool by"
+                        " calling the `.publish_as_work_pool()` method on your"
+                        " infrastructure block.and pass the name of the new work pool"
+                        " to the `work_pool_name` keyword argument of the `.deploy()`"
+                        " method. To learn more about work pools, see"
+                        " https://docs.prefect.io/latest/concepts/work-pools/"
                     ),
                 ],
             ),
-            ("no_infra_no_storage", []),
-            ("no_infra_storage", []),
+            (
+                "no_infra_no_storage",
+                [
+                    "Your `Deployment.build_from_flow` call was migrated to a"
+                    " `friendly_flow.serve()` call because your script does not use an"
+                    " infrastructure block. You can use `flow.serve` to create a"
+                    " deployment for your flow and poll for and execute scheduled"
+                    " runs. To"
+                    " learn more about serving flows, see"
+                    " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
+                ],
+            ),
+            (
+                "no_infra_storage",
+                [
+                    "Your `Deployment.build_from_flow` call was migrated to a"
+                    " `friendly_flow.serve()` call because your script does not use an"
+                    " infrastructure block. You can use `flow.serve` to create a"
+                    " deployment for your flow and poll for and execute scheduled"
+                    " runs. To"
+                    " learn more about serving flows, see"
+                    " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
+                ],
+            ),
         ],
     )
     def test_visit(self, base_scripts_folder, scripts_folder, expected_actions):
@@ -69,4 +93,4 @@ class TestBuildFromFlowTransformer:
             black.format_str(astor.to_source(tree), mode=black.FileMode())
             == expected_code
         )
-        assert transformer.additional_actions == expected_actions
+        assert transformer.additional_info == expected_actions

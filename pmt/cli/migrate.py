@@ -57,14 +57,10 @@ def build_from_flow(file: Annotated[Path, typer.Argument()]):
             f"```python\n{convert_ast_node_to_source_code(call.updated_node)}\n```\n"
         )
         markdown += "\n"
-        if call.required_actions:
-            markdown += "## Additional Actions\n"
+        if call.additional_info:
+            markdown += "## Additional Info\n"
             markdown += "\n"
-            markdown += (
-                "You will also need to take the following actions to complete the"
-                " migration for this call:\n"
-            )
-            for action in call.required_actions:
+            for action in call.additional_info:
                 markdown += f"- {action}\n"
             markdown += "\n"
         print(
