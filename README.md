@@ -57,65 +57,57 @@ will produce the following output:
 
 ```bash
 Refer to the output below to see how to update your code in tests/scripts/infra_and_storage/start.py
-────────────────────────────────────────────────────────────────────────────────────────────────────
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                                   Call 1 of 1: 'my-deployment'                                   ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                                 Call 1 of 1: 'my-deployment'                                                 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-To upgrade to the new deployment API, replace your original code with the updated code below.
+To upgrade to the new deployment API, replace your original code with the updated code below.                                   
 
+                                                         Original Code                                                          
 
-                                           Original Code
+ Deployment.build_from_flow(                                                                                                    
+     friendly_flow,                                                                                                             
+     name="my-deployment",                                                                                                      
+     storage=GitHub.load("my-repo"),                                                                                            
+     entrypoint="my_flows.py:friendly_flow",                                                                                    
+     infrastructure=KubernetesJob.load("my-job"),                                                                               
+     schedule=IntervalSchedule(timedelta(hours=1)),                                                                             
+     tags=["my-tag"],                                                                                                           
+     version="test",                                                                                                            
+     description="my-description",                                                                                              
+     work_pool_name="default-agent-pool",                                                                                       
+     work_queue_name="my-work-queue",                                                                                           
+     infra_overrides={"env": {"MY_ENV_VAR": "my-env-var-value"}},                                                               
+     is_schedule_active=True,                                                                                                   
+     parameters={"name": "Marvin"},                                                                                             
+ )                                                                                                                              
 
+                                                          Updated Code                                                          
 
- Deployment.build_from_flow(
-     friendly_flow,
-     name="my-deployment",
-     storage=GitHub.load("my-repo"),
-     entrypoint="my_flows.py:friendly_flow",
-     infrastructure=KubernetesJob.load("my-job"),
-     schedule=IntervalSchedule(timedelta(hours=1)),
-     tags=["my-tag"],
-     version="test",
-     description="my-description",
-     work_pool_name="default-agent-pool",
-     work_queue_name="my-work-queue",
-     infra_overrides={"env": {"MY_ENV_VAR": "my-env-var-value"}},
-     is_schedule_active=True,
-     parameters={"name": "Marvin"},
- )
+ flow.from_source(                                                                                                              
+     source=GitHub.load("my-repo"), entrypoint="my_flows.py:friendly_flow"                                                      
+ ).deploy(                                                                                                                      
+     name="my-deployment",                                                                                                      
+     description="my-description",                                                                                              
+     version="test",                                                                                                            
+     tags=["my-tag"],                                                                                                           
+     schedule=IntervalSchedule(timedelta(hours=1)),                                                                             
+     parameters={"name": "Marvin"},                                                                                             
+     is_schedule_active=True,                                                                                                   
+     work_pool_name="default-agent-pool",                                                                                       
+     work_queue_name="my-work-queue",                                                                                           
+     job_variables={"env": {"MY_ENV_VAR": "my-env-var-value"}},                                                                 
+ )                                                                                                                              
 
+                                                        Additional Info                                                         
 
-
-                                            Updated Code
-
-
- flow.from_source(
-     source=GitHub.load("my-repo"), entrypoint="my_flows.py:friendly_flow"
- ).deploy(
-     name="my-deployment",
-     description="my-description",
-     version="test",
-     tags=["my-tag"],
-     schedule=IntervalSchedule(timedelta(hours=1)),
-     parameters={"name": "Marvin"},
-     is_schedule_active=True,
-     work_pool_name="default-agent-pool",
-     work_queue_name="my-work-queue",
-     job_variables={"env": {"MY_ENV_VAR": "my-env-var-value"}},
- )
-
-
-
-                                         Additional Actions
-
-You will also need to take the following actions to complete the migration for this call:
-
- • Publish your infrastructure as a work pool by calling the .publish_as_work_pool() method on your
-   infrastructure block.
- • Pass the name of the new work pool to the work_pool_name keyword argument of the .deploy()
-   method.
-────────────────────────────────────────────────────────────────────────────────────────────────────
+ • When deploying flows with flow.deploy, work pools replace infrastructure blocks as the source of infrastructure              
+   configuration. To migrate from an infrastructure block to a work pool, publish your infrastructure as a work pool by calling 
+   the .publish_as_work_pool() method on your infrastructure block.and pass the name of the new work pool to the work_pool_name 
+   keyword argument of the .deploy() method. To learn more about work pools, see                                                
+   https://docs.prefect.io/latest/concepts/work-pools/                                                                          
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 
 ## Development
