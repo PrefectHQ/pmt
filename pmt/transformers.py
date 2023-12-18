@@ -47,7 +47,7 @@ class BuildFromFlowCall:
     @property
     def node(self):
         return self._node
-    
+
     @property
     def deployment_name(self):
         name_kwarg = self._kwargs.get("name", None)
@@ -86,12 +86,22 @@ class BuildFromFlowCall:
     def required_actions(self):
         required_actions = []
         if self.infrastructure:
-            required_actions.extend(
+            required_actions.append(
                 [
-                    "Publish your infrastructure as a work pool by calling the `.publish_as_work_pool()` method on your infrastructure block.",
-                    "Pass the name of the new work pool to the `work_pool_name` keyword argument of the `.deploy()` method.",
+                    (
+                        "When deploying flows with `flow.deploy` work pools replace"
+                        " infrastructure blocks as the source of infrastructure"
+                        " configuration. To migrate from an infrastructure block to a"
+                        " work pool, publish your infrastructure as a work pool by"
+                        " calling the `.publish_as_work_pool()` method on your"
+                        " infrastructure block.and pass the name of the new work pool"
+                        " to the `work_pool_name` keyword argument of the `.deploy()`"
+                        " method. To learn more about work pools, see"
+                        " https://docs.prefect.io/latest/concepts/work-pools/"
+                    ),
                 ]
             )
+
         return required_actions
 
     @property

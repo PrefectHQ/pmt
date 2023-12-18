@@ -25,7 +25,9 @@ class TestBuildFromFlowTransformer:
         return start_code, expected_code
 
     def test_finds_calls(self, base_scripts_folder):
-        start_code = (base_scripts_folder / "no_infra_no_storage" / "start.py").read_text()
+        start_code = (
+            base_scripts_folder / "no_infra_no_storage" / "start.py"
+        ).read_text()
         tree = ast.parse(start_code)
         transformer = BuildFromFlowTransformer(current_file=Path(__file__))
         transformer.visit(tree)
@@ -38,8 +40,15 @@ class TestBuildFromFlowTransformer:
             (
                 "infra_and_storage",
                 [
-                    "Publish your infrastructure as a work pool by calling the `.publish_as_work_pool()` method on your infrastructure block.",
-                    "Pass the name of the new work pool to the `work_pool_name` keyword argument of the `.deploy()` method.",
+                    (
+                        "Publish your infrastructure as a work pool by calling the"
+                        " `.publish_as_work_pool()` method on your infrastructure"
+                        " block."
+                    ),
+                    (
+                        "Pass the name of the new work pool to the `work_pool_name`"
+                        " keyword argument of the `.deploy()` method."
+                    ),
                 ],
             ),
             ("no_infra_no_storage", []),
