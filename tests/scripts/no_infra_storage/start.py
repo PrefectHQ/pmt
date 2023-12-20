@@ -15,6 +15,7 @@ if __name__ == "__main__":
         name="my-deployment",
         storage=GitHub.load("my-repo"),
         entrypoint="my_flows.py:friendly_flow",
+        path="/opt/prefect/project",
         schedule=CronSchedule("0 0 * * *"),
         tags=["my-tag"],
         version="test",

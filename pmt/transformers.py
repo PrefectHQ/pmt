@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import List
 
 
+class StorageKwarg:
+    pass
+
+
 class BuildFromFlowCall:
     def __init__(self, node: ast.Call, from_file: Path):
         self._node = node
@@ -12,7 +16,6 @@ class BuildFromFlowCall:
             if kw.arg
             not in [
                 "flow_name",
-                "path",
                 "timestamp",
                 "parameter_openapi_schema",
                 "manifest_path",
@@ -22,9 +25,10 @@ class BuildFromFlowCall:
         self._storage = self._kwargs.pop("storage", None)
         self._infrastructure = self._kwargs.pop("infrastructure", None)
         self._file = from_file
-        self._entrypoint = self._kwargs.pop("entrypoint", None) or ast.Constant(
-            s=f"{self.from_file}:{self.flow.id}"
-        )
+        self._entrypoint = self._kwargs.pop("entrypoint", None)
+        self._path = self._kwargs.pop("path", None)
+
+        self._from_file = from_file
 
         self._infra_overrides = self._kwargs.pop("infra_overrides", None)
         if self._infra_overrides:
@@ -68,7 +72,12 @@ class BuildFromFlowCall:
 
     @property
     def entrypoint(self):
-        return self._entrypoint
+        if self._entrypoint:
+            entrypoint_str = self._entrypoint.value
+            if self._path:
+                entrypoint_str = str(Path(self._path.value).joinpath(entrypoint_str))
+            return ast.Constant(value=entrypoint_str)
+        return ast.Constant(s=f"{self._from_file}:{self.flow.id}")
 
     @property
     def kwargs(self):

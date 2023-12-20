@@ -11,7 +11,8 @@ def friendly_flow(name: str = "world"):
 
 if __name__ == "__main__":
     flow.from_source(
-        source=GitHub.load("my-repo"), entrypoint="my_flows.py:friendly_flow"
+        source=GitHub.load("my-repo"),
+        entrypoint="/opt/prefect/project/my_flows.py:friendly_flow",
     ).serve(
         name="my-deployment",
         description="my-description",
