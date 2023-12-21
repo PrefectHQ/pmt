@@ -16,6 +16,12 @@ INFRA_ADDITIONAL_INFO = (
     " https://docs.prefect.io/latest/concepts/work-pools/"
 )
 
+IMAGE_ADDITIONAL_INFO = (
+    "Your new deploy script will build a Docker image to use as the execution"
+    " environment for your flow. You can change the image by updating the"
+    " `image` keyword argument to the `.deploy()` method."
+)
+
 NO_INFRA_ADDITIONAL_INFO = (
     "Your `Deployment.build_from_flow` call was migrated to a"
     " `flow.serve()` call because your script does not use an"
@@ -99,6 +105,13 @@ class InfrastructureKwarg:
             return block.dict(exclude_unset=True, exclude_defaults=True)
         else:
             return {}
+
+    @property
+    def configured_image(self):
+        image = self.block_document_data.get("image")
+        if isinstance(image, str) and image.startswith("prefecthq/prefect"):
+            return None
+        return image
 
 
 class BuildFromFlowCall:
@@ -208,6 +221,8 @@ class BuildFromFlowCall:
         additional_info = []
         if self.infrastructure:
             additional_info.append(INFRA_ADDITIONAL_INFO)
+            if self.infrastructure.configured_image:
+                additional_info.append(IMAGE_ADDITIONAL_INFO)
         else:
             additional_info.append(NO_INFRA_ADDITIONAL_INFO)
 
@@ -234,6 +249,7 @@ class BuildFromFlowCall:
                 ],
             )
         if not self.infrastructure:
+            excluded_kwargs = ["work_pool_name", "work_queue_name", "job_variables"]
             # Create a new AST node for 'flow.serve' call
             new_node = ast.Call(
                 func=ast.Attribute(
@@ -242,13 +258,17 @@ class BuildFromFlowCall:
                     ctx=ast.Load(),
                 ),
                 args=[],
-                keywords=[ast.keyword(arg=k, value=v) for k, v in self.kwargs.items()],
+                keywords=[
+                    ast.keyword(arg=k, value=v)
+                    for k, v in self.kwargs.items()
+                    if k not in excluded_kwargs
+                ],
             )
         else:
             # Create a new AST node for 'flow.deploy' call
-            if self.infrastructure.block_document_data.get("image"):
+            if self.infrastructure.configured_image:
                 self._kwargs["image"] = ast.Constant(
-                    s=self.infrastructure.block_document_data.get("image")
+                    s=self.infrastructure.configured_image
                 )
             new_node = ast.Call(
                 func=ast.Attribute(

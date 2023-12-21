@@ -21,6 +21,4 @@ if __name__ == "__main__":
         schedule=CronSchedule("0 0 * * *"),
         parameters={"name": "Marvin"},
         is_schedule_active=True,
-        work_pool_name="default-agent-pool",
-        work_queue_name="my-work-queue",
     )

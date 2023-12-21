@@ -23,5 +23,4 @@ if __name__ == "__main__":
         work_pool_name="default-agent-pool",
         work_queue_name="my-work-queue",
         job_variables={"env": {"MY_ENV_VAR": "my-env-var-value"}},
-        image="prefecthq/prefect:2.14.11-python3.11",
     )

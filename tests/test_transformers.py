@@ -9,6 +9,7 @@ from prefect.infrastructure import KubernetesJob
 from pmt.transformers import (
     INFRA_ADDITIONAL_INFO,
     NO_INFRA_ADDITIONAL_INFO,
+    IMAGE_ADDITIONAL_INFO,
     BuildFromFlowTransformer,
 )
 
@@ -53,18 +54,6 @@ class TestBuildFromFlowTransformer:
     def base_scripts_folder(self):
         return Path(__file__).parent / "scripts"
 
-    @pytest.fixture
-    def build_from_flow_with_no_infra_no_storage(self):
-        start_path = (
-            Path(__file__).parent / "scripts" / "no_infra_no_storage" / "start.py"
-        )
-        start_code = start_path.read_text()
-        expected_path = (
-            Path(__file__).parent / "scripts" / "no_infra_no_storage" / "expected.py"
-        )
-        expected_code = expected_path.read_text()
-        return start_code, expected_code
-
     def test_finds_calls(self, base_scripts_folder):
         start_code = (
             base_scripts_folder / "no_infra_no_storage" / "start.py"
@@ -78,11 +67,23 @@ class TestBuildFromFlowTransformer:
     @pytest.mark.parametrize(
         "scripts_folder,expected_actions,required_imports",
         [
-            ("infra_and_storage", [INFRA_ADDITIONAL_INFO], set()),
-            ("infra_var_and_storage_var", [INFRA_ADDITIONAL_INFO], set()),
+            (
+                "infra_and_storage",
+                [INFRA_ADDITIONAL_INFO],
+                set(),
+            ),
+            (
+                "infra_var_and_storage_var",
+                [INFRA_ADDITIONAL_INFO],
+                set(),
+            ),
             ("no_infra_no_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
             ("no_infra_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
-            ("infra_and_no_storage", [INFRA_ADDITIONAL_INFO], set()),
+            (
+                "infra_and_no_storage",
+                [INFRA_ADDITIONAL_INFO, IMAGE_ADDITIONAL_INFO],
+                set(),
+            ),
             (
                 "infra_slug_and_storage_slug",
                 [INFRA_ADDITIONAL_INFO],
