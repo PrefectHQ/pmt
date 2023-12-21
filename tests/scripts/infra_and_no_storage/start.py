@@ -15,9 +15,9 @@ if __name__ == "__main__":
     Deployment.build_from_flow(
         friendly_flow,
         name="my-deployment",
-        storage=GitHub.load("my-repo"),
+        path="/opt/prefect/project",
         entrypoint="my_flows.py:friendly_flow",
-        infrastructure=KubernetesJob.load("my-job-default-image"),
+        infrastructure=KubernetesJob.load("my-job"),
         schedule=IntervalSchedule(timedelta(hours=1)),
         tags=["my-tag"],
         version="test",
@@ -27,4 +27,5 @@ if __name__ == "__main__":
         infra_overrides={"env": {"MY_ENV_VAR": "my-env-var-value"}},
         is_schedule_active=True,
         parameters={"name": "Marvin"},
+        image="my-image:latest",
     )

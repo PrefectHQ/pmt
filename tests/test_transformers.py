@@ -4,6 +4,8 @@ import ast
 import astor
 import black
 
+from prefect.infrastructure import KubernetesJob
+
 from pmt.transformers import (
     INFRA_ADDITIONAL_INFO,
     NO_INFRA_ADDITIONAL_INFO,
@@ -28,6 +30,22 @@ def set_contains_import(node_set, module, name):
     module and name.
     """
     return any(is_matching_import(node, module, name) for node in node_set)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def k8s_block_with_image():
+    block = KubernetesJob(
+        image="my-image:latest",
+    )
+    block.save("my-job")
+    return block
+
+
+@pytest.fixture(autouse=True, scope="session")
+def k8s_block_default_image():
+    block = KubernetesJob()
+    block.save("my-job-default-image")
+    return block
 
 
 class TestBuildFromFlowTransformer:

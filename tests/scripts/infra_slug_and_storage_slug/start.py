@@ -15,7 +15,7 @@ if __name__ == "__main__":
         name="my-deployment",
         storage="github/my-repo",
         entrypoint="my_flows.py:friendly_flow",
-        infrastructure="kubernetes-job/my-job",
+        infrastructure="kubernetes-job/my-job-default-image",
         schedule=IntervalSchedule(timedelta(hours=1)),
         tags=["my-tag"],
         version="test",

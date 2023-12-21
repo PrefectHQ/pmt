@@ -2,6 +2,8 @@ import ast
 from pathlib import Path
 from typing import List
 
+import astor
+
 INFRA_ADDITIONAL_INFO = (
     "When deploying flows with `flow.deploy`, work pools replace"
     " infrastructure blocks as the source of infrastructure"
@@ -57,9 +59,40 @@ class StorageKwarg:
         return self.node
 
 
-class BuildFromFlowCall:
-    def __init__(self, node: ast.Call, from_file: Path):
+class InfrastructureKwarg:
+    def __init__(self, node: ast.Call | ast.Constant, call: "BuildFromFlowCall"):
         self._node = node
+        self._call = call
+
+    @property
+    def node(self):
+        return self._node
+
+    @property
+    def block_document_data(self):
+        # using block slug like kubernetes-job/my-job
+        if isinstance(self.node, ast.Constant):
+            from prefect.blocks.core import Block
+
+            block = Block.load(self.node.value)
+            return block.dict(exclude_unset=True, exclude_defaults=True)
+        # using a loaded block object like Block.load("kubernetes-job/my-job")
+        # or KubernetesJob.load("my-job")
+        else:
+            for found_import in self._call.found_imports:
+                # import all found imports so that we can run the block load code
+                exec(astor.to_source(found_import))
+            # load the block
+            block = eval(astor.to_source(self.node))
+            return block.dict(exclude_unset=True, exclude_defaults=True)
+
+
+class BuildFromFlowCall:
+    def __init__(
+        self, node: ast.Call, from_file: Path, transformer: "BuildFromFlowTransformer"
+    ):
+        self._node = node
+        self._transformer = transformer
         self._kwargs = {
             kw.arg: kw.value
             for kw in node.keywords
@@ -96,6 +129,7 @@ class BuildFromFlowCall:
         "work_queue_name",
         "job_variables",
         "triggers",
+        "image",
     ]
 
     @property
@@ -125,8 +159,14 @@ class BuildFromFlowCall:
         return []
 
     @property
+    def found_imports(self):
+        return self._transformer.found_imports
+
+    @property
     def infrastructure(self):
-        return self._infrastructure
+        if self._infrastructure:
+            return InfrastructureKwarg(self._infrastructure, self)
+        return None
 
     @property
     def entrypoint(self):
@@ -192,6 +232,10 @@ class BuildFromFlowCall:
             )
         else:
             # Create a new AST node for 'flow.deploy' call
+            if self.infrastructure.block_document_data.get("image"):
+                self._kwargs["image"] = ast.Constant(
+                    s=self.infrastructure.block_document_data.get("image")
+                )
             new_node = ast.Call(
                 func=ast.Attribute(
                     value=new_node,
@@ -214,6 +258,7 @@ class BuildFromFlowTransformer(ast.NodeTransformer):
     def __init__(self, current_file: Path):
         self._current_file = current_file
         self._calls = []
+        self._found_imports = []
 
     @property
     def current_file(self):
@@ -235,14 +280,26 @@ class BuildFromFlowTransformer(ast.NodeTransformer):
             for require_import in call.required_imports
         }
 
+    @property
+    def found_imports(self):
+        return self._found_imports
+
     def visit_Call(self, node):
         if (
             isinstance(node.func, ast.Attribute)
             and node.func.value.id == "Deployment"
             and node.func.attr == "build_from_flow"
         ):
-            build_from_flow_call = BuildFromFlowCall(node, self.current_file)
+            build_from_flow_call = BuildFromFlowCall(node, self.current_file, self)
             self._calls.append(build_from_flow_call)
             return ast.copy_location(build_from_flow_call.updated_node, node)
 
+        return self.generic_visit(node)
+
+    def visit_Import(self, node):
+        self._found_imports.append(node)
+        return self.generic_visit(node)
+
+    def visit_ImportFrom(self, node):
+        self._found_imports.append(node)
         return self.generic_visit(node)
