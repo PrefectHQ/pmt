@@ -11,17 +11,23 @@ def friendly_flow(name: str = "world"):
     print(f"Hello {name}")
 
 
+infra = KubernetesJob.load("my-job-default-image")
+storage = GitHub.load("my-repo")
+
 if __name__ == "__main__":
-    friendly_flow.deploy(
+    Deployment.build_from_flow(
+        friendly_flow,
         name="my-deployment",
-        description="my-description",
-        version="test",
-        tags=["my-tag"],
+        storage=storage,
+        entrypoint="my_flows.py:friendly_flow",
+        infrastructure=infra,
         schedule=IntervalSchedule(timedelta(hours=1)),
-        parameters={"name": "Marvin"},
-        is_schedule_active=True,
+        tags=["my-tag"],
+        version="test",
+        description="my-description",
         work_pool_name="default-agent-pool",
         work_queue_name="my-work-queue",
-        job_variables={"env": {"MY_ENV_VAR": "my-env-var-value"}},
-        image="my-image:latest",
+        infra_overrides={"env": {"MY_ENV_VAR": "my-env-var-value"}},
+        is_schedule_active=True,
+        parameters={"name": "Marvin"},
     )

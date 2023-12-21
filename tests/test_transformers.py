@@ -70,7 +70,7 @@ class TestBuildFromFlowTransformer:
             base_scripts_folder / "no_infra_no_storage" / "start.py"
         ).read_text()
         tree = ast.parse(start_code)
-        transformer = BuildFromFlowTransformer(current_file=Path(__file__))
+        transformer = BuildFromFlowTransformer(current_file=Path(__file__), tree=tree)
         transformer.visit(tree)
         assert len(transformer.calls) == 1
 
@@ -79,8 +79,10 @@ class TestBuildFromFlowTransformer:
         "scripts_folder,expected_actions,required_imports",
         [
             ("infra_and_storage", [INFRA_ADDITIONAL_INFO], set()),
+            ("infra_var_and_storage_var", [INFRA_ADDITIONAL_INFO], set()),
             ("no_infra_no_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
             ("no_infra_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
+            ("infra_and_no_storage", [INFRA_ADDITIONAL_INFO], set()),
             (
                 "infra_slug_and_storage_slug",
                 [INFRA_ADDITIONAL_INFO],
@@ -103,7 +105,7 @@ class TestBuildFromFlowTransformer:
         expected_path = folder / "expected.py"
         expected_code = expected_path.read_text()
         tree = ast.parse(start_code)
-        transformer = BuildFromFlowTransformer(current_file=Path(__file__))
+        transformer = BuildFromFlowTransformer(current_file=Path(__file__), tree=tree)
         transformer.visit(tree)
         assert tree != ast.parse(start_code)
         assert (

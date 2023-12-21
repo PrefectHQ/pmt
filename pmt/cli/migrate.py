@@ -27,7 +27,7 @@ def build_from_flow(file: Annotated[Path, typer.Argument()]):
     current_code = file.read_text()
     tree = ast.parse(current_code)
 
-    transformer = BuildFromFlowTransformer(current_file=file)
+    transformer = BuildFromFlowTransformer(current_file=file, tree=tree)
     transformer.visit(tree)
     if not transformer.calls:
         print(

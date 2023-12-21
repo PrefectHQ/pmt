@@ -11,8 +11,10 @@ def friendly_flow(name: str = "world"):
     print(f"Hello {name}")
 
 
+infra = KubernetesJob.load("my-job-default-image")
+storage = GitHub.load("my-repo")
 if __name__ == "__main__":
-    friendly_flow.deploy(
+    flow.from_source(source=storage, entrypoint="my_flows.py:friendly_flow").deploy(
         name="my-deployment",
         description="my-description",
         version="test",
@@ -23,5 +25,5 @@ if __name__ == "__main__":
         work_pool_name="default-agent-pool",
         work_queue_name="my-work-queue",
         job_variables={"env": {"MY_ENV_VAR": "my-env-var-value"}},
-        image="my-image:latest",
+        image="prefecthq/prefect:2.14.11-python3.11",
     )

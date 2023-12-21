@@ -27,7 +27,7 @@ NO_INFRA_ADDITIONAL_INFO = (
 
 
 class StorageKwarg:
-    def __init__(self, node: ast.Call | ast.Constant):
+    def __init__(self, node: ast.Call | ast.Constant | ast.Name):
         self._node = node
 
     @property
@@ -60,7 +60,9 @@ class StorageKwarg:
 
 
 class InfrastructureKwarg:
-    def __init__(self, node: ast.Call | ast.Constant, call: "BuildFromFlowCall"):
+    def __init__(
+        self, node: ast.Call | ast.Constant | ast.Name, call: "BuildFromFlowCall"
+    ):
         self._node = node
         self._call = call
 
@@ -77,14 +79,26 @@ class InfrastructureKwarg:
             block = Block.load(self.node.value)
             return block.dict(exclude_unset=True, exclude_defaults=True)
         # using a loaded block object like Block.load("kubernetes-job/my-job")
-        # or KubernetesJob.load("my-job")
-        else:
+        # or KubernetesJob.load("my-job") or a variable like infra
+        elif isinstance(self.node, ast.Call) or isinstance(self.node, ast.Name):
             for found_import in self._call.found_imports:
                 # import all found imports so that we can run the block load code
                 exec(astor.to_source(found_import))
             # load the block
-            block = eval(astor.to_source(self.node))
+            if isinstance(self.node, ast.Call):
+                block = eval(astor.to_source(self.node))
+            else:
+                for node in ast.walk(self._call._transformer._tree):
+                    if (
+                        isinstance(node, ast.Assign)
+                        and node.targets[0].id == self.node.id
+                    ):
+                        exec(astor.to_source(node))
+                        break
+                block = eval(astor.to_source(self.node))
             return block.dict(exclude_unset=True, exclude_defaults=True)
+        else:
+            return {}
 
 
 class BuildFromFlowCall:
@@ -255,10 +269,11 @@ class BuildFromFlowTransformer(ast.NodeTransformer):
     usage.
     """
 
-    def __init__(self, current_file: Path):
+    def __init__(self, current_file: Path, tree: ast.AST):
         self._current_file = current_file
         self._calls = []
         self._found_imports = []
+        self._tree = tree
 
     @property
     def current_file(self):
