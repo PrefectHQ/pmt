@@ -4,7 +4,30 @@ import ast
 import astor
 import black
 
-from pmt.transformers import BuildFromFlowTransformer
+from pmt.transformers import (
+    INFRA_ADDITIONAL_INFO,
+    NO_INFRA_ADDITIONAL_INFO,
+    BuildFromFlowTransformer,
+)
+
+
+def is_matching_import(node, module, name):
+    """
+    Check if the AST node is an ImportFrom node matching the specified module and name.
+    """
+    return (
+        isinstance(node, ast.ImportFrom)
+        and node.module == module
+        and any(alias.name == name for alias in node.names)
+    )
+
+
+def set_contains_import(node_set, module, name):
+    """
+    Check if the set of nodes contains an ImportFrom node matching the specified
+    module and name.
+    """
+    return any(is_matching_import(node, module, name) for node in node_set)
 
 
 class TestBuildFromFlowTransformer:
@@ -35,51 +58,27 @@ class TestBuildFromFlowTransformer:
 
     # TODO: figure out what to do when there is infrastructure but no storage
     @pytest.mark.parametrize(
-        "scripts_folder,expected_actions",
+        "scripts_folder,expected_actions,required_imports",
         [
+            ("infra_and_storage", [INFRA_ADDITIONAL_INFO], set()),
+            ("no_infra_no_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
+            ("no_infra_storage", [NO_INFRA_ADDITIONAL_INFO], set()),
             (
-                "infra_and_storage",
-                [
-                    (
-                        "When deploying flows with `flow.deploy`, work pools replace"
-                        " infrastructure blocks as the source of infrastructure"
-                        " configuration. To migrate from an infrastructure block to a"
-                        " work pool, publish your infrastructure as a work pool by"
-                        " calling the `.publish_as_work_pool()` method on your"
-                        " infrastructure block.and pass the name of the new work pool"
-                        " to the `work_pool_name` keyword argument of the `.deploy()`"
-                        " method. To learn more about work pools, see"
-                        " https://docs.prefect.io/latest/concepts/work-pools/"
-                    ),
-                ],
-            ),
-            (
-                "no_infra_no_storage",
-                [
-                    "Your `Deployment.build_from_flow` call was migrated to a"
-                    " `friendly_flow.serve()` call because your script does not use an"
-                    " infrastructure block. You can use `flow.serve` to create a"
-                    " deployment for your flow and poll for and execute scheduled"
-                    " runs. To"
-                    " learn more about serving flows, see"
-                    " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
-                ],
-            ),
-            (
-                "no_infra_storage",
-                [
-                    "Your `Deployment.build_from_flow` call was migrated to a"
-                    " `friendly_flow.serve()` call because your script does not use an"
-                    " infrastructure block. You can use `flow.serve` to create a"
-                    " deployment for your flow and poll for and execute scheduled"
-                    " runs. To"
-                    " learn more about serving flows, see"
-                    " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
-                ],
+                "infra_slug_and_storage_slug",
+                [INFRA_ADDITIONAL_INFO],
+                {
+                    ast.ImportFrom(
+                        module="prefect.blocks.core",
+                        names=[ast.alias(name="Block", asname=None)],
+                        level=0,
+                    )
+                },
             ),
         ],
     )
-    def test_visit(self, base_scripts_folder, scripts_folder, expected_actions):
+    def test_visit(
+        self, base_scripts_folder, scripts_folder, expected_actions, required_imports
+    ):
         folder = base_scripts_folder / scripts_folder
         start_path = folder / "start.py"
         start_code = start_path.read_text()
@@ -94,3 +93,10 @@ class TestBuildFromFlowTransformer:
             == expected_code
         )
         assert transformer.additional_info == expected_actions
+        assert len(transformer.required_imports) == len(required_imports)
+        for required_import in required_imports:
+            assert set_contains_import(
+                transformer.required_imports,
+                required_import.module,
+                required_import.names[0].name,
+            )

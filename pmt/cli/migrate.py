@@ -35,6 +35,9 @@ def build_from_flow(file: Annotated[Path, typer.Argument()]):
         )
         return
 
+    for required_import in transformer.required_imports:
+        tree.body.insert(0, required_import)
+
     print(
         f"Refer to the output below to see how to update your code in [blue]{file}[/]"
     )

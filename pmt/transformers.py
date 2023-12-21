@@ -2,9 +2,59 @@ import ast
 from pathlib import Path
 from typing import List
 
+INFRA_ADDITIONAL_INFO = (
+    "When deploying flows with `flow.deploy`, work pools replace"
+    " infrastructure blocks as the source of infrastructure"
+    " configuration. To migrate from an infrastructure block to a"
+    " work pool, publish your infrastructure as a work pool by"
+    " calling the `.publish_as_work_pool()` method on your"
+    " infrastructure block.and pass the name of the new work pool"
+    " to the `work_pool_name` keyword argument of the `.deploy()`"
+    " method. To learn more about work pools, see"
+    " https://docs.prefect.io/latest/concepts/work-pools/"
+)
+
+NO_INFRA_ADDITIONAL_INFO = (
+    "Your `Deployment.build_from_flow` call was migrated to a"
+    " `flow.serve()` call because your script does not use an"
+    " infrastructure block. You can use `flow.serve` to create a"
+    " deployment for your flow and poll for and execute scheduled runs. To"
+    " learn more about serving flows, see"
+    " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
+)
+
 
 class StorageKwarg:
-    pass
+    def __init__(self, node: ast.Call | ast.Constant):
+        self._node = node
+
+    @property
+    def node(self):
+        return self._node
+
+    @property
+    def required_import(self):
+        if isinstance(self.node, ast.Constant):
+            return ast.ImportFrom(
+                module="prefect.blocks.core",
+                names=[ast.alias(name="Block", asname=None)],
+                level=0,
+            )
+        return None
+
+    @property
+    def new_node(self):
+        if isinstance(self.node, ast.Constant):
+            return ast.Call(
+                func=ast.Attribute(
+                    value="Block",
+                    attr="load",
+                    ctx=ast.Load(),
+                ),
+                args=[self.node],
+                keywords=[],
+            )
+        return self.node
 
 
 class BuildFromFlowCall:
@@ -64,7 +114,15 @@ class BuildFromFlowCall:
 
     @property
     def storage(self):
-        return self._storage
+        if self._storage:
+            return StorageKwarg(self._storage)
+        return None
+
+    @property
+    def required_imports(self):
+        if self.storage and self.storage.required_import:
+            return [self.storage.required_import]
+        return []
 
     @property
     def infrastructure(self):
@@ -95,28 +153,9 @@ class BuildFromFlowCall:
     def additional_info(self):
         additional_info = []
         if self.infrastructure:
-            additional_info.append(
-                (
-                    "When deploying flows with `flow.deploy`, work pools replace"
-                    " infrastructure blocks as the source of infrastructure"
-                    " configuration. To migrate from an infrastructure block to a"
-                    " work pool, publish your infrastructure as a work pool by"
-                    " calling the `.publish_as_work_pool()` method on your"
-                    " infrastructure block.and pass the name of the new work pool"
-                    " to the `work_pool_name` keyword argument of the `.deploy()`"
-                    " method. To learn more about work pools, see"
-                    " https://docs.prefect.io/latest/concepts/work-pools/"
-                ),
-            )
+            additional_info.append(INFRA_ADDITIONAL_INFO)
         else:
-            additional_info.append(
-                "Your `Deployment.build_from_flow` call was migrated to a"
-                f" `{self.flow.id}.serve()` call because your script does not use an"
-                " infrastructure block. You can use `flow.serve` to create a"
-                " deployment for your flow and poll for and execute scheduled runs. To"
-                " learn more about serving flows, see"
-                " https://docs.prefect.io/latest/concepts/deployments/#serving-flows-on-long-lived-infrastructure"
-            )
+            additional_info.append(NO_INFRA_ADDITIONAL_INFO)
 
         return additional_info
 
@@ -133,7 +172,7 @@ class BuildFromFlowCall:
                 ),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="source", value=self.storage),
+                    ast.keyword(arg="source", value=self.storage.new_node),
                     ast.keyword(
                         arg="entrypoint",
                         value=self.entrypoint,
@@ -187,6 +226,14 @@ class BuildFromFlowTransformer(ast.NodeTransformer):
     @property
     def additional_info(self):
         return [action for call in self.calls for action in call.additional_info]
+
+    @property
+    def required_imports(self):
+        return {
+            require_import
+            for call in self.calls
+            for require_import in call.required_imports
+        }
 
     def visit_Call(self, node):
         if (
