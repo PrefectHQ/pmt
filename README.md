@@ -12,7 +12,7 @@ pip install git+https://github.com/PrefectHQ/pmt.git
 
 ## Usage
 
-Generate new code for a `Deployment.build_from_flow`` call:
+Generate new code for a `Deployment.build_from_flow` call:
 
 ```bash
 pmt migrate build-from-flow path/to/script.py
@@ -116,6 +116,12 @@ To write the updated code to a file, use the `--output` flag:
 
 ```bash
 pmt migrate build-from-flow path/to/script.py --output path/to/output.py
+```
+
+To update a file in place, you can provide the same path for the input and output:
+
+```bash
+pmt migrate build-from-flow path/to/script.py --output path/to/script.py
 ```
 
 ## Development
