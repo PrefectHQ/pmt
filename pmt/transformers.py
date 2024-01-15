@@ -167,7 +167,7 @@ class BuildFromFlowCall:
     def deployment_name(self):
         name_kwarg = self._kwargs.get("name", None)
         if name_kwarg:
-            return ast.unparse(name_kwarg)
+            return astor.to_source(name_kwarg)
 
     @property
     def flow(self):
