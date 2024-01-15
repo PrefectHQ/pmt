@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import astor
 
@@ -33,7 +33,7 @@ NO_INFRA_ADDITIONAL_INFO = (
 
 
 class StorageKwarg:
-    def __init__(self, node: ast.Call | ast.Constant | ast.Name):
+    def __init__(self, node: Union[ast.Call, ast.Constant, ast.Name]):
         self._node = node
 
     @property
@@ -67,7 +67,7 @@ class StorageKwarg:
 
 class InfrastructureKwarg:
     def __init__(
-        self, node: ast.Call | ast.Constant | ast.Name, call: "BuildFromFlowCall"
+        self, node: Union[ast.Call, ast.Constant, ast.Name], call: "BuildFromFlowCall"
     ):
         self._node = node
         self._call = call

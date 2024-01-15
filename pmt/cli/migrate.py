@@ -5,7 +5,8 @@ from rich import print
 from rich.rule import Rule
 from rich.markdown import Markdown
 
-from typing import Annotated, Optional
+from typing import Optional
+from typing_extensions import Annotated
 
 from pmt.transformers import BuildFromFlowTransformer
 from pmt.utils import convert_ast_node_to_source_code
