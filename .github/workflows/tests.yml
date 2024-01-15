@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - "**/*.py"
+      - .github/workflows/tests.yaml
+      - pyproject.toml
+      - poetry.lock
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.py"
+      - .github/workflows/tests.yaml
+      - pyproject.toml
+      - poetry.lock
+
+jobs:
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+          cache-dependency-path: poetry.lock
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run tests
+        run: |
+          pytest -vv
