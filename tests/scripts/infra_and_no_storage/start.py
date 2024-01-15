@@ -27,5 +27,4 @@ if __name__ == "__main__":
         infra_overrides={"env": {"MY_ENV_VAR": "my-env-var-value"}},
         is_schedule_active=True,
         parameters={"name": "Marvin"},
-        image="my-image:latest",
     )

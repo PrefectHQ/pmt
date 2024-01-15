@@ -110,6 +110,14 @@ To upgrade to the new deployment API, replace your original code with the update
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 
+### Write updated code to a file
+
+To write the updated code to a file, use the `--output` flag:
+
+```bash
+pmt migrate build-from-flow path/to/script.py --output path/to/output.py
+```
+
 ## Development
 
 - Install [poetry](https://python-poetry.org/docs/#installation)

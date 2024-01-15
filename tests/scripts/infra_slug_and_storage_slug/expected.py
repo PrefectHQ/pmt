@@ -1,3 +1,4 @@
+from prefect.blocks.core import Block
 from prefect import flow
 from prefect.deployments import Deployment
 from prefect.client.schemas.schedules import IntervalSchedule

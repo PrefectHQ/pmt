@@ -1,8 +1,6 @@
 from pathlib import Path
 import pytest
 import ast
-import astor
-import black
 
 from prefect.infrastructure import KubernetesJob
 
@@ -12,6 +10,7 @@ from pmt.transformers import (
     IMAGE_ADDITIONAL_INFO,
     BuildFromFlowTransformer,
 )
+from pmt.utils import convert_ast_node_to_source_code
 
 
 def is_matching_import(node, module, name):
@@ -50,10 +49,6 @@ def k8s_block_default_image():
 
 
 class TestBuildFromFlowTransformer:
-    @pytest.fixture
-    def base_scripts_folder(self):
-        return Path(__file__).parent / "scripts"
-
     def test_finds_calls(self, base_scripts_folder):
         start_code = (
             base_scripts_folder / "no_infra_no_storage" / "start.py"
@@ -63,7 +58,6 @@ class TestBuildFromFlowTransformer:
         transformer.visit(tree)
         assert len(transformer.calls) == 1
 
-    # TODO: figure out what to do when there is infrastructure but no storage
     @pytest.mark.parametrize(
         "scripts_folder,expected_actions,required_imports",
         [
@@ -109,10 +103,10 @@ class TestBuildFromFlowTransformer:
         transformer = BuildFromFlowTransformer(current_file=Path(__file__), tree=tree)
         transformer.visit(tree)
         assert tree != ast.parse(start_code)
-        assert (
-            black.format_str(astor.to_source(tree), mode=black.FileMode())
-            == expected_code
-        )
+        for required_import in transformer.required_imports:
+            tree.body.insert(0, required_import)
+        result_code = convert_ast_node_to_source_code(tree)
+        assert result_code == expected_code
         assert transformer.additional_info == expected_actions
         assert len(transformer.required_imports) == len(required_imports)
         for required_import in required_imports:
