@@ -7,7 +7,7 @@ import astor
 INFRA_ADDITIONAL_INFO = (
     "When deploying flows with `flow.deploy`, work pools replace"
     " infrastructure blocks as the source of infrastructure"
-    " configuration. To migrate from an infrastructure block to a"
+    " configuration. To upgrade from an infrastructure block to a"
     " work pool, publish your infrastructure as a work pool by"
     " calling the `.publish_as_work_pool()` method on your"
     " infrastructure block.and pass the name of the new work pool"
@@ -23,7 +23,7 @@ IMAGE_ADDITIONAL_INFO = (
 )
 
 NO_INFRA_ADDITIONAL_INFO = (
-    "Your `Deployment.build_from_flow` call was migrated to a"
+    "Your `Deployment.build_from_flow` call was upgraded to a"
     " `flow.serve()` call because your script does not use an"
     " infrastructure block. You can use `flow.serve` to create a"
     " deployment for your flow and poll for and execute scheduled runs. To"

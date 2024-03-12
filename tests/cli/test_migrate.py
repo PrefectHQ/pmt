@@ -18,10 +18,10 @@ cli_runner = CliRunner()
         "infra_slug_and_storage_slug",
     ],
 )
-def test_migrate_build_from_flow(base_scripts_folder, scripts_folder):
+def test_upgrade_build_from_flow(base_scripts_folder, scripts_folder):
     folder = base_scripts_folder / scripts_folder
     start_path = folder / "start.py"
-    result = cli_runner.invoke(app, ["migrate", "build-from-flow", str(start_path)])
+    result = cli_runner.invoke(app, ["upgrade", "build-from-flow", str(start_path)])
     assert result.exit_code == 0
     assert (
         f"Refer to the output below to see how to update your code in {start_path}"
@@ -43,7 +43,7 @@ def test_migrate_build_from_flow(base_scripts_folder, scripts_folder):
         "infra_slug_and_storage_slug",
     ],
 )
-def test_migrate_build_from_flow_with_output(
+def test_upgrade_build_from_flow_with_output(
     tmp_path, base_scripts_folder, scripts_folder
 ):
     folder = base_scripts_folder / scripts_folder
@@ -51,7 +51,7 @@ def test_migrate_build_from_flow_with_output(
     result = cli_runner.invoke(
         app,
         [
-            "migrate",
+            "upgrade",
             "build-from-flow",
             str(start_path),
             "-o",

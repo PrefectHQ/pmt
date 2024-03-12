@@ -1,10 +1,10 @@
 import typer
 
-from pmt.cli import migrate
+from pmt.cli import upgrade
 
 
 app = typer.Typer()
-app.add_typer(migrate.app, name="migrate")
+app.add_typer(upgrade.app, name="upgrade")
 
 
 @app.callback()
