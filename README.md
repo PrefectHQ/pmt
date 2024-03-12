@@ -1,6 +1,6 @@
 # pmt
 
-`pmt` is a command line tool designed to aid in the migration between different versions of the Prefect Python API.
+`pmt` is a command line tool designed to help you upgrade to new versions of the Prefect Python API.
 
 ## Installation
 
@@ -103,7 +103,7 @@ To upgrade to the new deployment API, replace your original code with the update
                                                         Additional Info                                                         
 
  • When deploying flows with flow.deploy, work pools replace infrastructure blocks as the source of infrastructure              
-   configuration. To migrate from an infrastructure block to a work pool, publish your infrastructure as a work pool by calling 
+   configuration. To upgrade from an infrastructure block to a work pool, publish your infrastructure as a work pool by calling 
    the .publish_as_work_pool() method on your infrastructure block.and pass the name of the new work pool to the work_pool_name 
    keyword argument of the .deploy() method. To learn more about work pools, see                                                
    https://docs.prefect.io/latest/concepts/work-pools/                                                                          
